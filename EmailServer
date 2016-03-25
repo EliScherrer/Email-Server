@@ -23,9 +23,9 @@ public class EmailServer {
 	public static final String CRLF = "\r\n";
 	
 	// Used to print out extra information
-	private boolean verbose = false; 
-	
-	
+	private boolean verbose = false;
+
+
 	public void run() {
 		Scanner in = new Scanner(System.in);
 		
@@ -77,7 +77,6 @@ public class EmailServer {
         // TODO: implement this method
         return null;
     }
-	
 	/**
 	 * Replaces "poorly formatted" escape characters with their proper
 	 * values. For some terminals, when escaped characters are
@@ -98,7 +97,37 @@ public class EmailServer {
 		
 		return str;
 	}
-	
+	//protocal methods
+														//todo add user
+	public String addUser(String[] args) {
+
+		return "";
+	}
+														//todo get all users
+	public String getAllUsers(String[] args) {
+
+		return "";
+	}
+														//todo delete user
+	public String deleteUser(String[] args) {
+
+		return "";
+	}
+														//todo send email
+	public String sendEmail(String[] args) {
+
+		return "";
+	}
+														//todo get emails
+	public String getEmails(String[] args) {
+
+		return "";
+	}
+														//todo delete email
+	public String deleteEmail(String[] args) {
+
+		return "";
+	}
 	/**
 	 * This main method is for testing purposes only.
 	 * @param args - the command line arguments
