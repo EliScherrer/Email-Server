@@ -1,0 +1,28 @@
+/**
+ * Created by Eli Scherrer on 3/25/2016.
+ */
+public class DynamicBuffer {
+
+    public DynamicBuffer(int initSize) {
+
+    }
+    public int numElements() {
+
+    }
+    public int getBufferSize() {
+
+    }
+
+    public void add(Email email) {
+
+    }
+
+    public boolean remove(int index) {
+
+    }
+
+    public Email[] getNewest(int n) {
+
+    }
+
+}
