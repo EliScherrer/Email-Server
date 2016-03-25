@@ -1,0 +1,26 @@
+import java.util.Date;
+/**
+ * Created by Eli Scherrer on 3/25/2016.
+ */
+public class Email {
+
+    public Email(String recipient, String sender, long id, String message) {
+
+    }
+    public long getID() {
+
+    }
+    public String getOwner() {
+
+    }
+    public String getSender() {
+
+    }
+    public String getMessage() {
+
+    }
+
+    public String toString() {
+
+    }
+}
