@@ -2,31 +2,44 @@
  * Created by Eli Scherrer on 3/25/2016.
  */
 public class User {
+    String username;
+    String password;
 
     public User(String username, String password) {
-
+        this.username = username;
+        this.password = password;
+        //todo make sure it creates a dynamic buffer along with this
     }
     public String getName() {
-
+        return this.username;
     }
 
     public boolean checkPassword(String password) {
-
+        if (password.equals(this.password)) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public int numEmail() {
-
+        //todo return the number of messages in the inbox (dynamic buffer)
+        return 0;
     }
 
     public void receiveEmail(String sender, String message) {
-
+       //todo add message to dynamic buffer "you should call some operations provided by dynamicBuffer"
     }
 
     public Email[] retrieveEmail(int n) {
-
+        Email[] temp = new Email[n];
+        //todo fill the array with the n most recent emails in the dynamicBuffer
+        return temp;
     }
 
     public boolean removeEmail(long emailID) {
-
+        //todo return the specificed email from the inbox "use operations provided by DynamicBuffer"
+        return true;
     }
 }
