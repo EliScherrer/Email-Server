@@ -1,28 +1,70 @@
+import java.util.Arrays;
+
 /**
  * Created by Eli Scherrer on 3/25/2016.
  */
 public class DynamicBuffer {
+    int initSize;
+    int numberMessages;
+    Email[] array;
+    int arraySize;
 
     public DynamicBuffer(int initSize) {
-
+        this.initSize = initSize;
+        this.numberMessages = 0;
+        this.array = new Email[initSize];
+        this.arraySize = initSize;
     }
     public int numElements() {
-
+        return this.numberMessages;
     }
     public int getBufferSize() {
-
+        return this.arraySize;
     }
 
     public void add(Email email) {
-
+        if (numberMessages == this.arraySize) {
+            sizeUp();
+        }
+        this.array[this.numberMessages] = email;
     }
 
     public boolean remove(int index) {
-
+        if (index > arraySize || index > numberMessages - 1) {
+            return false;
+        }
+        if (numberMessages - 1 <= this.arraySize / 4) {
+            sizeDown();
+        }
+        return false;
     }
 
     public Email[] getNewest(int n) {
+        Email[] temp;
+        if (numberMessages <= 0) {
+            return null;
+        }
+        else if (n > numberMessages) {
+            temp = new Email[numberMessages];
+        }
+        else {
+            temp = new Email[n];
+        }
+        for (int i = 0; i < temp.length; i++) {
+            if (numberMessages - 1 - i >= 0) {
+                temp[i] = array[numberMessages - 1 - i];
+            }
+        }
+        return temp;
+    }
 
+    public void sizeUp() {
+        this.array = Arrays.copyOf(this.array, arraySize * 2);
+        arraySize = arraySize * 2;
+    }
+    public void sizeDown() {
+        this.array = Arrays.copyOf(this.array, arraySize / 2);
+        arraySize = arraySize / 2;
     }
 
 }
