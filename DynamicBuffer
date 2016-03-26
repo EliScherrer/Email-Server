@@ -23,48 +23,51 @@ public class DynamicBuffer {
     }
 
     public void add(Email email) {
-        if (numberMessages == this.arraySize) {
+        if (this.numberMessages == this.arraySize) {
             sizeUp();
         }
         this.array[this.numberMessages] = email;
+        this.numberMessages++;
     }
 
     public boolean remove(int index) {
-        if (index > arraySize || index > numberMessages - 1) {
+        if (index > this.arraySize || index > this.numberMessages - 1) {
             return false;
         }
         if (numberMessages - 1 <= this.arraySize / 4) {
             sizeDown();
         }
-        return false;
+        this.array[index] = null;
+        //todo maybe i should shift all the elements after i remove one
+        this.numberMessages--;
+        return true;
     }
 
     public Email[] getNewest(int n) {
         Email[] temp;
-        if (numberMessages <= 0) {
+        if (this.numberMessages <= 0) {
             return null;
         }
-        else if (n > numberMessages) {
-            temp = new Email[numberMessages];
+        else if (n > this.numberMessages) {
+            temp = new Email[this.numberMessages];
         }
         else {
             temp = new Email[n];
         }
         for (int i = 0; i < temp.length; i++) {
-            if (numberMessages - 1 - i >= 0) {
-                temp[i] = array[numberMessages - 1 - i];
+            if (this.numberMessages - 1 - i >= 0) {
+                temp[i] = this.array[this.numberMessages - 1 - i];
             }
         }
         return temp;
     }
 
     public void sizeUp() {
-        this.array = Arrays.copyOf(this.array, arraySize * 2);
-        arraySize = arraySize * 2;
+        this.array = Arrays.copyOf(this.array, this.arraySize * 2);
+        this.arraySize = this.arraySize * 2;
     }
     public void sizeDown() {
-        this.array = Arrays.copyOf(this.array, arraySize / 2);
-        arraySize = arraySize / 2;
+        this.array = Arrays.copyOf(this.array, this.arraySize / 2);
+        this.arraySize = this.arraySize / 2;
     }
-
 }
