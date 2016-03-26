@@ -4,11 +4,14 @@
 public class User {
     String username;
     String password;
+    DynamicBuffer inbox;
+    long counter;
 
     public User(String username, String password) {
         this.username = username;
         this.password = password;
-        //todo make sure it creates a dynamic buffer along with this
+        this.inbox = new DynamicBuffer(2);
+        this.counter = 0;
     }
     public String getName() {
         return this.username;
@@ -24,22 +27,28 @@ public class User {
     }
 
     public int numEmail() {
-        //todo return the number of messages in the inbox (dynamic buffer)
-        return 0;
+        return inbox.numElements();
     }
 
     public void receiveEmail(String sender, String message) {
-       //todo add message to dynamic buffer "you should call some operations provided by dynamicBuffer"
+        this.counter++;
+        Email email = new Email(this.username, sender, counter, message);
+        inbox.add(email);
     }
 
     public Email[] retrieveEmail(int n) {
-        Email[] temp = new Email[n];
-        //todo fill the array with the n most recent emails in the dynamicBuffer
+        Email[] temp =  this.inbox.getNewest(n);
         return temp;
     }
 
     public boolean removeEmail(long emailID) {
-        //todo return the specificed email from the inbox "use operations provided by DynamicBuffer"
-        return true;
+        for (int i = 0; i < this.inbox.numElements(); i++) {
+            if (this.inbox.array[i].getID() == emailID) {   //todo check this, not sure if it makes sense / right index?
+                inbox.remove(i);
+                this.counter--;
+                return true;
+            }
+        }
+        return false;
     }
 }
