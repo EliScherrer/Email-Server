@@ -97,8 +97,7 @@ public class EmailServer {
                     }
                 }
                 if (temp == 1) {
-                    theReturn = addUser(elements);
-                    //todo return theReturn here?
+                    return addUser(elements);
                 }
                 else {
                     //todo return some sort of error because the username and password are not right
@@ -110,7 +109,22 @@ public class EmailServer {
         }
         else if (command.equals("DELETE-USER")) {
             if (elements.length == 3) {
-
+                String username = elements[1];
+                String password = elements[2];
+                int temp = 0;
+                for (int i = 0; i < numUsers; i++) {
+                    if (users[i].getName().equals(username)) {
+                        if (users[i].checkPassword(password)) {
+                            temp = 1;
+                        }
+                    }
+                }
+                if (temp == 1) {
+                    return deleteUser(elements);
+                }
+                else {
+                    //todo return some sort of error because the username and password are not right
+                }
             }
             else {
                 //todo throw error/ or something
@@ -118,7 +132,22 @@ public class EmailServer {
         }
         else if (command.equals("GET-ALL-USERS")) {
             if (elements.length == 2) {
-
+                String username = elements[1];
+                String password = elements[2];
+                int temp = 0;
+                for (int i = 0; i < numUsers; i++) {
+                    if (users[i].getName().equals(username)) {
+                        if (users[i].checkPassword(password)) {
+                            temp = 1;
+                        }
+                    }
+                }
+                if (temp == 1) {
+                    return getAllUsers(elements);
+                }
+                else {
+                    //todo return some sort of error because the username and password are not right
+                }
             }
             else {
                 //todo throw error/ or something
@@ -126,7 +155,22 @@ public class EmailServer {
         }
         else if (command.equals("SEND-EMAIL")) {
             if (elements.length == 5) {
-
+                String username = elements[1];
+                String password = elements[2];
+                int temp = 0;
+                for (int i = 0; i < numUsers; i++) {
+                    if (users[i].getName().equals(username)) {
+                        if (users[i].checkPassword(password)) {
+                            temp = 1;
+                        }
+                    }
+                }
+                if (temp == 1) {
+                    return sendEmail(elements);
+                }
+                else {
+                    //todo return some sort of error because the username and password are not right
+                }
             }
             else {
                 //todo throw error/ or something
@@ -134,7 +178,22 @@ public class EmailServer {
         }
         else if (command.equals("GET-EMAILS")) {
             if (elements.length == 4) {
-
+                String username = elements[1];
+                String password = elements[2];
+                int temp = 0;
+                for (int i = 0; i < numUsers; i++) {
+                    if (users[i].getName().equals(username)) {
+                        if (users[i].checkPassword(password)) {
+                            temp = 1;
+                        }
+                    }
+                }
+                if (temp == 1) {
+                    return getEmails(elements);
+                }
+                else {
+                    //todo return some sort of error because the username and password are not right
+                }
             }
             else {
                 //todo throw error/ or something
@@ -142,14 +201,27 @@ public class EmailServer {
         }
         else if (command.equals("DELETE-EMAIL")) {
             if (elements.length == 4) {
-
+                String username = elements[1];
+                String password = elements[2];
+                int temp = 0;
+                for (int i = 0; i < numUsers; i++) {
+                    if (users[i].getName().equals(username)) {
+                        if (users[i].checkPassword(password)) {
+                            temp = 1;
+                        }
+                    }
+                }
+                if (temp == 1) {
+                    return deleteEmail(elements);
+                }
+                else {
+                    //todo return some sort of error because the username and password are not right
+                }
             }
             else {
                 //todo throw error/ or something
             }
         }
-        // TODO: Verify the username and password.
-        // TODO: Invoke the appropriate protocol method specified in the below Protocol Methods section. Hint: this is a great time to use a switch statement.
         // TODO: Return the correct server response based on the success, failure, or improper format of the request.
         return null;
     }
