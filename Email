@@ -32,7 +32,7 @@ public class Email {
     }
     public String toString() {
         String temp = "";
-        temp = this.id + ";" + this.theDate + "; From: " + this.sender + " " + this.message;
+        temp = this.id + ";" + this.theDate + "; From: " + this.sender + " \"" + this.message + "\"";
         return temp;
     }
 }
