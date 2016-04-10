@@ -22,18 +22,17 @@ public class EmailServer {
 	public static final String DELIMITER = "\t";
 	public static final String SUCCESS = "SUCCESS";
 	public static final String CRLF = "\r\n";
-	User[] users = new User[2];
+	User[] users = {new User("root", "cs180")};
 	public int numUsers = 1;
+	public int numCountedUsers = 1;
 
 
 
 	// Used to print out extra information
 	private boolean verbose = false;
 
-
 	public void run() {
 		Scanner in = new Scanner(System.in);
-		users[0] = new User("root", "cs180"); // add the default user
 
 		while (true) {
 			System.out.printf("Input Server Request: ");
@@ -75,11 +74,13 @@ public class EmailServer {
 	public int checkUserPass (String username, String password) { //  0 = correct 1 = wrong name 2 = wrong pass
 		int tempName = 0;
 		int tempPass = 0;
-		for (int i = 0; i < numUsers; i++) {
-			if (users[i].getName().equals(username)) {
-				tempName = 1;
-				if (users[i].checkPassword(password)) {
-					tempPass = 1;
+		for (int i = 0; i < numCountedUsers; i++) {
+			if (users[i] != null) {
+				if (users[i].getName().equals(username)) {
+					tempName = 1;
+					if (users[i].checkPassword(password)) {
+						tempPass = 1;
+					}
 				}
 			}
 		}
@@ -110,10 +111,13 @@ public class EmailServer {
 
 		//check to see if there is CRLF
 		String butWhy = elements[elements.length - 1];
+
 		if (butWhy.substring(butWhy.length() - 4, butWhy.length() - 1).equals(CRLF) == false) {
-			return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "no thing at end") + CRLF;
+			System.out.println(butWhy.substring(butWhy.length() - 4, butWhy.length() - 1));
+			return ErrorFactory.makeErrorMessage(-10, "no thing at end");
 		}
-		// TODO: Check format validity (correct command and number of parameters).
+		butWhy = butWhy.substring(0,butWhy.length() - 4);
+		elements[elements.length - 1] = butWhy;
 		if (command.equals("ADD-USER")) {
 			if (elements.length == 3) {
 				//check for correct username and password
@@ -124,10 +128,10 @@ public class EmailServer {
 					return "the name check is fucked";
 				}
 				if (nameCheck == 1) {
-					return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name 1") + CRLF;
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 1") + CRLF;
 				}
 				if (nameCheck == 2) {
-					return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass 1") + CRLF;
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 1") + CRLF;
 				}
 				if (nameCheck == 0) {
 					return addUser(elements);
@@ -135,7 +139,7 @@ public class EmailServer {
 				return "what the fuck happened";
 			}
 			else {
-				return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "wrong format 1") + CRLF;
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 1") + CRLF;
 			}
 		}
 		else if (command.equals("DELETE-USER")) {
@@ -148,10 +152,10 @@ public class EmailServer {
 					return "the name check is fucked";
 				}
 				if (nameCheck == 1) {
-					return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name 2") + CRLF;
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 2") + CRLF;
 				}
 				if (nameCheck == 2) {
-					return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass 2") + CRLF;
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 2") + CRLF;
 				}
 				if (nameCheck == 0) {
 					return addUser(elements);
@@ -159,7 +163,7 @@ public class EmailServer {
 				return "what the fuck happened";
 			}
 			else {
-				return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "wrong format 2") + CRLF;
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 2") + CRLF;
 			}
 		}
 		else if (command.equals("GET-ALL-USERS")) {
@@ -172,10 +176,10 @@ public class EmailServer {
 					return "the name check is fucked";
 				}
 				if (nameCheck == 1) {
-					return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name 3") + CRLF;
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 3") + CRLF;
 				}
 				if (nameCheck == 2) {
-					return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass 3") + CRLF;
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 3") + CRLF;
 				}
 				if (nameCheck == 0) {
 					return addUser(elements);
@@ -183,7 +187,7 @@ public class EmailServer {
 				return "what the fuck happened";
 			}
 			else {
-				return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "wrong format 3") + CRLF;
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 3") + CRLF;
 			}
 		}
 		else if (command.equals("SEND-EMAIL")) {
@@ -196,10 +200,10 @@ public class EmailServer {
 					return "the name check is fucked";
 				}
 				if (nameCheck == 1) {
-					return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name 4") + CRLF;
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 4") + CRLF;
 				}
 				if (nameCheck == 2) {
-					return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass 4") + CRLF;
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 4") + CRLF;
 				}
 				if (nameCheck == 0) {
 					return addUser(elements);
@@ -207,7 +211,7 @@ public class EmailServer {
 				return "what the fuck happened";
 			}
 			else {
-				return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "wrong format 4") + CRLF;
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 4") + CRLF;
 			}
 		}
 		else if (command.equals("GET-EMAILS")) {
@@ -220,10 +224,10 @@ public class EmailServer {
 					return "the name check is fucked";
 				}
 				if (nameCheck == 1) {
-					return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name 5") + CRLF;
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 5") + CRLF;
 				}
 				if (nameCheck == 2) {
-					return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass 5") + CRLF;
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 5") + CRLF;
 				}
 				if (nameCheck == 0) {
 					return addUser(elements);
@@ -231,7 +235,7 @@ public class EmailServer {
 				return "what the fuck happened";
 			}
 			else {
-				return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "wrong format 5") + CRLF;
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 5") + CRLF;
 			}
 		}
 		else if (command.equals("DELETE-EMAIL")) {
@@ -244,10 +248,10 @@ public class EmailServer {
 					return "the name check is fucked";
 				}
 				if (nameCheck == 1) {
-					return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name 6") + CRLF;
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 6") + CRLF;
 				}
 				if (nameCheck == 2) {
-					return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass 6") + CRLF;
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 6") + CRLF;
 				}
 				if (nameCheck == 0) {
 					return addUser(elements);
@@ -255,11 +259,11 @@ public class EmailServer {
 				return "what the fuck happened";
 			}
 			else {
-				return "FAILURE" + DELIMITER + "-10" + DELIMITER + ErrorFactory.makeErrorMessage(-10, "wrong format 3") + CRLF;
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 3") + CRLF;
 			}
 		}
 		else {
-			return "FAILURE" + DELIMITER + "-11" + DELIMITER + ErrorFactory.makeErrorMessage(-11, "doesn't match any command") + CRLF;
+			return ErrorFactory.makeErrorMessage(-11, "doesn't match any command") + CRLF;
 		}
 	}
 	/**
@@ -282,8 +286,7 @@ public class EmailServer {
 
 		return str;
 	}
-											//protocal methods
-	//todo add user
+											//protocol methods
 	public String addUser(String[] args) {
 		String username = args[1];
 		String password = args[2];
@@ -292,29 +295,23 @@ public class EmailServer {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 0 || nameCheck == 2) {
-			return "FAILURE" + DELIMITER + "-22" + DELIMITER + ErrorFactory.makeErrorMessage(-22, "same name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-22, "same name") + CRLF;
 		}
 		else if (nameCheck == 1) {
 			if (username.length() < 1 || username.length() > 20 || password.length() < 4 || password.length() > 40) {
-				return "FAILURE" + DELIMITER + "-23" + DELIMITER + ErrorFactory.makeErrorMessage(-23, "username or password don't work") + CRLF;
-			}
-			//todo this is fucked i need to fix this 
+				return ErrorFactory.makeErrorMessage(-23, "username or password don't work") + CRLF;
+			}	//"NOTE: these requirements are part of the User class, not the EmailServer"????
 			else {
-				User u = new User(args[0], args[1]);
-				User[] usersTemp = Arrays.copyOf(users, users.length * 2);
-				for (int i = 0; i < usersTemp.length; i++) {
-					if (usersTemp[i] == null) {
-						usersTemp[i] = u;
-					}
+				User u = new User(username, password);
+				if (numCountedUsers == users.length) {
+					users = Arrays.copyOf(users, users.length * 2);
 				}
-				users = usersTemp;
-
-				return SUCCESS;
+				users[numUsers] = u;
+				numUsers++;
+				numCountedUsers++;
+				return SUCCESS + CRLF;
 			}
 		}
-
-
-
 		return "add user is fucked somewhere";
 	}
 	public String getAllUsers(String[] args) {
@@ -325,19 +322,21 @@ public class EmailServer {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 1) {
-			return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
 		}
 		else if (nameCheck == 2) {
-			return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
 		}
 		else if (nameCheck == 0) {
 			String names = "";
-			for (int i = 0; i < numUsers ; i++) {
-				names = names + DELIMITER + users[i].getName();
+			for (int i = 0; i < numCountedUsers ; i++) {
+				if (users[i] != null) {
+					names = names + DELIMITER + users[i].getName();
+				}
 			}
 			return SUCCESS + names + CRLF;
 		}
-		return "its done fucked";
+		return "its done fucked in get all users somewhere";
 	}
 	public String deleteUser(String[] args) {
 		String username = args[1];
@@ -347,22 +346,24 @@ public class EmailServer {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 1) {
-			return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
 		}
 		else if (nameCheck == 2) {
-			return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
 		}
 		else if (nameCheck == 0) {
 			if (username.equals("root")) {
-				return "FAILURE" + DELIMITER + "-23" + DELIMITER + ErrorFactory.makeErrorMessage(-23, "tryna remove root") + CRLF;
+				return ErrorFactory.makeErrorMessage(-23, "tryna remove root") + CRLF;
 			}
 			else {
-				for (int i = 0; i < numUsers; i++) {
-					if (users[i].getName().equals(username)) {
-						users[i] = null;
-						//todo shift the array??
-						numUsers--;
-						return "SUCCESS\r\n";
+				for (int i = 0; i < numCountedUsers; i++) {
+					if (users[i] != null) {
+						if (users[i].getName().equals(username)) {
+							users[i] = null;
+							//todo shift the array??
+							numUsers--;
+							return "SUCCESS\r\n";
+						}
 					}
 				}
 				return "idk, i guess the name was right, but now it isnt??";
@@ -372,69 +373,128 @@ public class EmailServer {
 		}
 		return "its done fucked";
 	}
-	//todo send email
 	public String sendEmail(String[] args) {
 		String username = args[1];
 		String password = args[2];
+		String recipient = args[3];
+		String message = args[4];
+		User receiver = null;
+		int recipExist = 0;
+
 		int nameCheck = checkUserPass(username, password);
 		if (nameCheck == -1) {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 1) {
-			return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
 		}
 		else if (nameCheck == 2) {
-			return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
 		}
 		else if (nameCheck == 0) {
+			for (int i = 0; i < numCountedUsers; i++) {
+				if (users[i] != null) {
+					if(users[i].getName().equals(recipient)) {
+						receiver = users[i];
+						recipExist = 1;
+					}
+				}
+			}
+			if (recipExist == 1) {
+				receiver.receiveEmail(username, message);
+				return SUCCESS + CRLF;
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-20, "recipient n/a") + CRLF;
 
-			//todo do the shittodo do the shittodo do the shittodo do the shittodo do the shittodo do the shittodo do
-
-			return null;
+			}
 		}
 		return "its done fucked";
 	}
-	//todo get emails
 	public String getEmails(String[] args) {
 		String username = args[1];
 		String password = args[2];
+		User emailGetter = null;
+		String theEmails = "";
+		int numMessages = 0;
+		try {												//make sure it is an integer
+			numMessages = Integer.parseInt(args[3]);
+		} catch (Exception e) {
+			return ErrorFactory.makeErrorMessage(-23, "not an int") + CRLF;
+		}
+
+		if (numMessages < 0) {
+			return ErrorFactory.makeErrorMessage(-23, "need positive #") + CRLF;
+		}
+
 		int nameCheck = checkUserPass(username, password);
 		if (nameCheck == -1) {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 1) {
-			return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
 		}
 		else if (nameCheck == 2) {
-			return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
 		}
 		else if (nameCheck == 0) {
-
-			//todo do the shittodo do the shittodo do the shittodo do the shittodo do the shittodo do the shittodo do
-
-			return null;
+			if (numMessages == 0) {					//no messages
+				return SUCCESS + CRLF;
+			}
+			for (int i = 0; i < numCountedUsers; i++) {			//find the user to do stuff with
+				if (users[i] != null) {
+					if (users[i].getName().equals(username)) {
+						emailGetter = users[i];
+					}
+				}
+			}
+			Email[] recentMails = emailGetter.retrieveEmail(numMessages);
+			for (int i = 0; i < recentMails.length; i++) {
+				theEmails = theEmails + DELIMITER + recentMails[i].getMessage();
+			}
+			return SUCCESS + theEmails + CRLF;
 		}
 		return "its done fucked";
 	}
-	//todo delete email
 	public String deleteEmail(String[] args) {
 		String username = args[1];
 		String password = args[2];
+		int id = 0;
+		User emailGetter = null;
+
+		try {												//make sure it is an integer
+			id = Integer.parseInt(args[3]);
+		} catch (Exception e) {
+			return ErrorFactory.makeErrorMessage(-23, "not an int") + CRLF;
+		}
 		int nameCheck = checkUserPass(username, password);
 		if (nameCheck == -1) {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 1) {
-			return "FAILURE" + DELIMITER + "-20" + DELIMITER + ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-20, "wrong name in delete email") + CRLF;
 		}
 		else if (nameCheck == 2) {
-			return "FAILURE" + DELIMITER + "-21" + DELIMITER + ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
 		}
 		else if (nameCheck == 0) {
-
-			//todo do the shittodo do the shittodo do the shittodo do the shittodo do the shittodo do the shittodo do
-
-			return null;
+			for (int i = 0; i < numCountedUsers; i++) {			//find the user to do stuff with
+				if (users[i] != null) {
+					if (users[i].getName().equals(username)) {
+						emailGetter = users[i];
+					}
+				}
+			}
+			Email[] recentMails = emailGetter.retrieveEmail(emailGetter.numEmail());
+			if (recentMails != null) {
+				for (int i = 0; i < recentMails.length; i++) {
+					if (recentMails[i].getID() == id) {
+						emailGetter.removeEmail(id);
+						return SUCCESS + CRLF;
+					}
+				}
+			}
+			return ErrorFactory.makeErrorMessage(-23, "wrong id") + CRLF;
 		}
 		return "its done fucked";
 	}
