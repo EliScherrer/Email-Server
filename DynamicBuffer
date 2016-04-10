@@ -19,6 +19,7 @@ public class DynamicBuffer {
         return this.numberMessages;
     }
     public int getBufferSize() {
+
         return this.arraySize;
     }
 
@@ -28,6 +29,9 @@ public class DynamicBuffer {
         }
         this.array[this.numberMessages] = email;
         this.numberMessages++;
+        if (this.numberMessages == this.arraySize) {
+            sizeUp();
+        }
     }
 
     public boolean remove(int index) {
@@ -38,7 +42,13 @@ public class DynamicBuffer {
             sizeDown();
         }
         this.array[index] = null;
-        //todo maybe i should shift all the elements after i remove one
+        for (int i = index; i < numberMessages; i++) {              //array shift?
+            if (index + 1 < this.arraySize) {
+                if (this.array[index + 1] != null) {
+                    this.array[index] = this.array[index + 1];
+                }
+            }
+        }
         this.numberMessages--;
         return true;
     }
@@ -56,7 +66,9 @@ public class DynamicBuffer {
         }
         for (int i = 0; i < temp.length; i++) {
             if (this.numberMessages - 1 - i >= 0) {
-                temp[i] = this.array[this.numberMessages - 1 - i];
+                if (this.array[this.numberMessages - 1 - i] != null) {
+                    temp[i] = this.array[this.numberMessages - 1 - i];
+                }
             }
         }
         return temp;
