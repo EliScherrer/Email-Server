@@ -248,8 +248,23 @@ public class EmailServer {
     //protocal methods
     //todo add user
     public String addUser(String[] args) {
+        String username = args[0];
+        String password = args[1];
+        if (username.length() > 1 && username.length() < 20 && password.length() > 4 && password.length() < 40) {
+            return FAILURE;
+        }
+        else {
+            User u = new User(args[0], args[1]);
+            User[] usersTemp = Arrays.copyOf(users, users.length * 2);
+            for (int i = 0; i < usersTemp.length; i++) {
+                if (usersTemp[i] == null) {
+                    usersTemp[i] = u;
+                }
+            }
+            users = usersTemp;
 
-        return "";
+            return SUCCESS;
+        }
     }
     //todo get all users
     public String getAllUsers(String[] args) {
