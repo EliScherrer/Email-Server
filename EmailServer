@@ -1,3 +1,5 @@
+import javax.swing.*;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -16,271 +18,566 @@ import java.util.*;
  */
 
 public class EmailServer {
-    // Useful constants
-    public static final String FAILURE = "FAILURE";
-    public static final String DELIMITER = "\t";
-    public static final String SUCCESS = "SUCCESS";
-    public static final String CRLF = "\r\n";
-    User[] users = new User[2];
-    public int numUsers = 1;
+	// Useful constants
+	public static final String FAILURE = "FAILURE";
+	public static final String DELIMITER = "\t";
+	public static final String SUCCESS = "SUCCESS";
+	public static final String CRLF = "\r\n";
+	User[] users = {new User("root", "cs180")};
+	public int numUsers = 1;
+	public int numCountedUsers = 1;
+	public int thereIsAFile;
+	public File f;
+	public FileWriter p;
+	public Scanner s;
+	public BufferedWriter bw;
+
+	// Used to print out extra information
+	private boolean verbose = false;
+
+	public EmailServer() {
+		thereIsAFile = 0;
+	}
+
+	public EmailServer(String fileName) throws IOException {
+		this.f = new File(fileName);
+		try {
+			this.s = new Scanner(f);
+			while (s.hasNext()) {
+				String fullLine = this.s.nextLine();
+				String[] splitUp = fullLine.split(",");
+				if (splitUp.length == 2) {
+					String[] fuckThisShit = {"fuck", splitUp[0], splitUp[1]};
+					addUser(fuckThisShit);
+				}
+			}
+			s.close();
+		} catch (FileNotFoundException e) {
+			f.createNewFile();
+		}
+		thereIsAFile = 1;
+		this.p = new FileWriter(f,true);
+		bw = new BufferedWriter(p);
+	}
+
+	public void run() {
+		Scanner in = new Scanner(System.in);
+
+		while (true) {
+			System.out.printf("Input Server Request: ");
+			String command = in.nextLine();
+
+			command = replaceEscapeChars(command);
+
+			if (command.equalsIgnoreCase("kill") || command.equalsIgnoreCase("kill\r\n"))
+				break;
+
+			if (command.equalsIgnoreCase("verbose") || command.equalsIgnoreCase("verbose\r\n")) {
+				verbose = !verbose;
+				System.out.printf("VERBOSE has been turned %s.\n\n", verbose ? "on" : "off");
+				continue;
+			}
+
+			String response = null;
+			try {
+				response = parseRequest(command);
+			} catch (Exception ex) {
+				response = ErrorFactory.makeErrorMessage(ErrorFactory.UNKNOWN_ERROR,
+						String.format("An exception of %s occurred.", ex.getClass().toString()));
+			}
+
+			// change the formatting of the server response so it prints well on the terminal (for testing purposes only)
+			//if (response.startsWith("SUCCESS" + DELIMITER))
+			//	response = response.replace(DELIMITER, NEWLINE);
+			if (response.startsWith(FAILURE) && !DELIMITER.equals("\t"))
+				response = response.replace(DELIMITER, "\t");
+
+			if (verbose)
+				System.out.print("response: ");
+			System.out.printf("\"%s\"\n\n", response);
+		}
+
+		in.close();
+	}
+
+	public int checkUserPass (String username, String password) { //  0 = correct 1 = wrong name 2 = wrong pass
+		int tempName = 0;
+		int tempPass = 0;
+		for (int i = 0; i < numCountedUsers; i++) {
+			if (users[i] != null) {
+				if (users[i].getName().equals(username)) {
+					tempName = 1;
+					if (users[i].checkPassword(password)) {
+						tempPass = 1;
+					}
+				}
+			}
+		}
+		if (tempName == 0) {
+			return 1;
+		}
+		if (tempPass == 0 && tempName == 1) {
+			return 2;
+		}
+		else if (tempPass == 1 && tempName == 1) {
+			return 0;
+		}
+		return -1;
+	}
+
+	/**
+	 * Determines which client command the request is using and calls
+	 * the function associated with that command.
+	 *
+	 * @param request - the full line of the client request (CRLF included)
+	 * @return the server response
+	 */
+	public String parseRequest(String request) {
+		//Parse the client request (that means split the request into parameters).
+		String[] elements = request.split("\t");
+
+		//todo check to make sure everything is split by \t??
+
+		//check to see if there is CRLF
+		String butWhy = elements[elements.length - 1];
+
+		if (butWhy.contains("\r\n") == false) {
+			return ErrorFactory.makeErrorMessage(-10, "no thing at end");
+		}
+		butWhy = butWhy.substring(0,butWhy.length() - 2);
+		elements[elements.length - 1] = butWhy;
+		String command = elements[0];
 
 
+		if (command.equals("ADD-USER")) {
+			if (elements.length == 3) {
+				//check for correct username and password
+				String username = elements[1];
+				String password = elements[2];
 
-    // Used to print out extra information
-    private boolean verbose = false;
+				return addUser(elements);
+
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 1") + CRLF;
+			}
+		}
+		else if (command.equals("DELETE-USER")) {
+			if (elements.length == 3) {
+				//check for correct username and password
+				String username = elements[1];
+				String password = elements[2];
+				int nameCheck = checkUserPass(username, password);
+				if (nameCheck == -1) {
+					return "the name check is fucked";
+				}
+				if (nameCheck == 1) {
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 2") + CRLF;
+				}
+				if (nameCheck == 2) {
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 2") + CRLF;
+				}
+				if (nameCheck == 0) {
+					return deleteUser(elements);
+				}
+				return "what the fuck happened";
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 2") + CRLF;
+			}
+		}
+		else if (command.equals("GET-ALL-USERS")) {
+			if (elements.length == 3) {
+				//check for correct username and password
+				String username = elements[1];
+				String password = elements[2];
+				int nameCheck = checkUserPass(username, password);
+				if (nameCheck == -1) {
+					return "the name check is fucked";
+				}
+				if (nameCheck == 1) {
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 3") + CRLF;
+				}
+				if (nameCheck == 2) {
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 3") + CRLF;
+				}
+				if (nameCheck == 0) {
+					return getAllUsers(elements);
+				}
+				return "what the fuck happened";
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 3") + CRLF;
+			}
+		}
+		else if (command.equals("SEND-EMAIL")) {
+			if (elements.length == 5) {
+				//check for correct username and password
+				String username = elements[1];
+				String password = elements[2];
+				int nameCheck = checkUserPass(username, password);
+				if (nameCheck == -1) {
+					return "the name check is fucked";
+				}
+				if (nameCheck == 1) {
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 4") + CRLF;
+				}
+				if (nameCheck == 2) {
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 4") + CRLF;
+				}
+				if (nameCheck == 0) {
+					return sendEmail(elements);
+				}
+				return "what the fuck happened";
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 4") + CRLF;
+			}
+		}
+		else if (command.equals("GET-EMAILS")) {
+			if (elements.length == 4) {
+				//check for correct username and password
+				String username = elements[1];
+				String password = elements[2];
+				int nameCheck = checkUserPass(username, password);
+				if (nameCheck == -1) {
+					return "the name check is fucked";
+				}
+				if (nameCheck == 1) {
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 5") + CRLF;
+				}
+				if (nameCheck == 2) {
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 5") + CRLF;
+				}
+				if (nameCheck == 0) {
+					return getEmails(elements);
+				}
+				return "what the fuck happened";
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 5") + CRLF;
+			}
+		}
+		else if (command.equals("DELETE-EMAIL")) {
+			if (elements.length == 4) {
+				//check for correct username and password
+				String username = elements[1];
+				String password = elements[2];
+				int nameCheck = checkUserPass(username, password);
+				if (nameCheck == -1) {
+					return "the name check is fucked";
+				}
+				if (nameCheck == 1) {
+					return ErrorFactory.makeErrorMessage(-20, "wrong name 6") + CRLF;
+				}
+				if (nameCheck == 2) {
+					return ErrorFactory.makeErrorMessage(-21, "wrong pass 6") + CRLF;
+				}
+				if (nameCheck == 0) {
+					return deleteEmail(elements);
+				}
+				return "what the fuck happened";
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-10, "wrong format 3") + CRLF;
+			}
+		}
+		else {
+			return ErrorFactory.makeErrorMessage(-11, "doesn't match any command") + CRLF;
+		}
+	}
+	/**
+	 * Replaces "poorly formatted" escape characters with their proper
+	 * values. For some terminals, when escaped characters are
+	 * entered, the terminal includes the "\" as a character instead
+	 * of entering the escape character. This function replaces the
+	 * incorrectly inputed characters with their proper escaped
+	 * characters.
+	 *
+	 * @param str - the string to be edited
+	 * @return the properly escaped string
+	 */
+	private static String replaceEscapeChars(String str) {
+		str = str.replace("\\r\\n", "\r\n"); // may not be necessary, but just in case
+		str = str.replace("\\r", "\r");
+		str = str.replace("\\n", "\n");
+		str = str.replace("\\t", "\t");
+		str = str.replace("\\f", "\f");
+
+		return str;
+	}
+											//protocol methods
+	public String addUser(String[] args) {
+		String username = args[1];
+		String password = args[2];
+		int nameCheck = checkUserPass(username, password);
+		if (nameCheck == -1) {
+			return "the name check is fucked";
+		}
+		else if (nameCheck == 0 || nameCheck == 2) {
+			return ErrorFactory.makeErrorMessage(-22, "same name in add user?") + CRLF;
+		}
+		else if (nameCheck == 1) {
+			if (username.length() < 1 || username.length() > 20 || password.length() < 4 || password.length() > 40) {
+				return ErrorFactory.makeErrorMessage(-23, "username or password don't work") + CRLF;
+			}	//"NOTE: these requirements are part of the User class, not the EmailServer"????
+			if (username.matches("[A-Za-z0-9]+") == false || password.matches("[A-Za-z0-9]+") == false) {
+				return ErrorFactory.makeErrorMessage(-23, "username or password don't work") + CRLF;
+			}
+			else {
+				User u = new User(username, password);
+				if (numCountedUsers == users.length) {
+					users = Arrays.copyOf(users, users.length * 2);
+				}
+				users[numUsers] = u;
+				numUsers++;
+				numCountedUsers++;
+				//I-O stuff
+
+				if (thereIsAFile == 1) {
+					try {
+						bw.write(username + "," + password );
+						bw.close();
+					} catch (IOException e) {
+						System.out.println("file writer couldn't write");
+					}
+				}
+
+				return SUCCESS + CRLF;
+			}
+		}
+		return "add user is fucked somewhere";
+	}
+	public String getAllUsers(String[] args) {
+		String username = args[1];
+		String password = args[2];
+		int nameCheck = checkUserPass(username, password);
+		if (nameCheck == -1) {
+			return "the name check is fucked";
+		}
+		else if (nameCheck == 1) {
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+		}
+		else if (nameCheck == 2) {
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+		}
+		else if (nameCheck == 0) {
+			String names = "";
+			for (int i = 0; i < numCountedUsers ; i++) {
+				if (users[i] != null) {
+					names = names + DELIMITER + users[i].getName();
+				}
+			}
+			return SUCCESS + names + CRLF;
+		}
+		return "its done fucked in get all users somewhere";
+	}
+	public String deleteUser(String[] args) {
+		String username = args[1];
+		String password = args[2];
+		int nameCheck = checkUserPass(username, password);
+		if (nameCheck == -1) {
+			return "the name check is fucked";
+		}
+		else if (nameCheck == 1) {
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+		}
+		else if (nameCheck == 2) {
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+		}
+		else if (nameCheck == 0) {
+			if (username.equals("root")) {
+				return ErrorFactory.makeErrorMessage(-23, "tryna remove root") + CRLF;
+			}
+			else {
+				for (int i = 0; i < numCountedUsers; i++) {
+					if (users[i] != null) {
+						if (users[i].getName().equals(username)) {
+							//I-O stuffs
+							if (thereIsAFile == 1) {
+								try {
+									s = new Scanner(f);
+									while (s.hasNext()) {
+										String fullLine = s.nextLine();
+										String[] splitUp = fullLine.split(",");
+										if (splitUp.length == 2) {
+											if (username.equals(users[i].getName())) {
+												try {
+													BufferedReader reader = new BufferedReader(new FileReader(this.f));
+													BufferedWriter writer = new BufferedWriter(new FileWriter(this.f));
+
+													String lineToRemove = username + "," + password;
+													String currentLine;
+
+													while ((currentLine = reader.readLine()) != null) {
+														// trim newline when comparing with lineToRemove
+														String trimmedLine = currentLine.trim();
+														if (trimmedLine.equals(lineToRemove)) continue;
+														writer.write(currentLine + System.getProperty("line.separator"));
+													}
+													writer.close();
+													reader.close();
+													boolean successful = this.f.renameTo(this.f);
+												} catch (Exception e) {
+													System.out.println("Honestly have no clue i dont understand this");
+												}
+											}
+										}
+									}
+								} catch (IOException e) {
+									System.out.println("erroer when trying to delete");
+								}
+							}
+
+							users[i] = null;
+							//todo shift the array??
+							numUsers--;
+							return SUCCESS + CRLF;
+						}
+					}
+				}
+				return "idk, i guess the name was right, but now it isnt??";
+			}
 
 
-    public void run() {
-        Scanner in = new Scanner(System.in);
-        users[0] = new User("root", "cs180"); // add the default user
+		}
+		return "its done fucked";
+	}
+	public String sendEmail(String[] args) {
+		String username = args[1];
+		String password = args[2];
+		String recipient = args[3];
+		String message = args[4];
+		User receiver = null;
+		int recipExist = 0;
 
-        while (true) {
-            System.out.printf("Input Server Request: ");
-            String command = in.nextLine();
+		int nameCheck = checkUserPass(username, password);
+		if (nameCheck == -1) {
+			return "the name check is fucked";
+		}
+		else if (nameCheck == 1) {
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+		}
+		else if (nameCheck == 2) {
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+		}
+		else if (nameCheck == 0) {
+			for (int i = 0; i < numCountedUsers; i++) {
+				if (users[i] != null) {
+					if(users[i].getName().equals(recipient)) {
+						receiver = users[i];
+						recipExist = 1;
+					}
+				}
+			}
+			if (recipExist == 1) {
+				receiver.receiveEmail(username, message);
+				return SUCCESS + CRLF;
+			}
+			else {
+				return ErrorFactory.makeErrorMessage(-20, "recipient n/a") + CRLF;
 
-            command = replaceEscapeChars(command);
+			}
+		}
+		return "its done fucked";
+	}
+	public String getEmails(String[] args) {
+		String username = args[1];
+		String password = args[2];
+		User emailGetter = null;
+		String theEmails = "";
+		int numMessages = 0;
+		try {												//make sure it is an integer
+			numMessages = Integer.parseInt(args[3]);
+		} catch (Exception e) {
+			return ErrorFactory.makeErrorMessage(-23, "not an int") + CRLF;
+		}
 
-            if (command.equalsIgnoreCase("kill") || command.equalsIgnoreCase("kill\r\n"))
-                break;
+		if (numMessages < 0) {
+			return ErrorFactory.makeErrorMessage(-23, "need positive #") + CRLF;
+		}
 
-            if (command.equalsIgnoreCase("verbose") || command.equalsIgnoreCase("verbose\r\n")) {
-                verbose = !verbose;
-                System.out.printf("VERBOSE has been turned %s.\n\n", verbose ? "on" : "off");
-                continue;
-            }
+		int nameCheck = checkUserPass(username, password);
+		if (nameCheck == -1) {
+			return "the name check is fucked";
+		}
+		else if (nameCheck == 1) {
+			return ErrorFactory.makeErrorMessage(-20, "wrong name") + CRLF;
+		}
+		else if (nameCheck == 2) {
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+		}
+		else if (nameCheck == 0) {
+			if (numMessages == 0) {					//no messages
+				return SUCCESS + CRLF;
+			}
+			for (int i = 0; i < numCountedUsers; i++) {			//find the user to do stuff with
+				if (users[i] != null) {
+					if (users[i].getName().equals(username)) {
+						emailGetter = users[i];
+					}
+				}
+			}
+			Email[] recentMails = emailGetter.retrieveEmail(numMessages);
+			String fullMessage = "";
+			if (recentMails != null) {
+				for (int i = 0; i < recentMails.length; i++) {
+					fullMessage = recentMails[i].toString();
+					theEmails = theEmails + DELIMITER + fullMessage;
 
-            String response = null;
-            try {
-                response = parseRequest(command);
-            } catch (Exception ex) {
-                response = ErrorFactory.makeErrorMessage(ErrorFactory.UNKNOWN_ERROR,
-                        String.format("An exception of %s occurred.", ex.getClass().toString()));
-            }
+				}
+			}
+			return SUCCESS + theEmails + CRLF;
+		}
+		return "its done fucked";
+	}
+	public String deleteEmail(String[] args) {
+		String username = args[1];
+		String password = args[2];
+		int id = 0;
+		User emailGetter = null;
 
-            // change the formatting of the server response so it prints well on the terminal (for testing purposes only)
-            //if (response.startsWith("SUCCESS" + DELIMITER))
-            //	response = response.replace(DELIMITER, NEWLINE);
-            if (response.startsWith(FAILURE) && !DELIMITER.equals("\t"))
-                response = response.replace(DELIMITER, "\t");
-
-            if (verbose)
-                System.out.print("response: ");
-            System.out.printf("\"%s\"\n\n", response);
-        }
-
-        in.close();
-    }
-
-    /**
-     * Determines which client command the request is using and calls
-     * the function associated with that command.
-     *
-     * @param request - the full line of the client request (CRLF included)
-     * @return the server response
-     */
-    public String parseRequest(String request) {
-        // TODO: Parse the client request (that means split the request into parameters).
-        String[] elements = request.split("\t");
-        String command = elements[0];
-        String theReturn = "";
-        // TODO: Check format validity (correct command and number of parameters).
-        if (command.equals("ADD-USER")) {
-            if (elements.length == 3) {
-                String username = elements[1];
-                String password = elements[2];
-                int temp = 0;
-                for (int i = 0; i < numUsers; i++) {
-                    if (users[i].getName().equals(username)) {
-                        if (users[i].checkPassword(password)) {
-                            temp = 1;
-                        }
-                    }
-                }
-                if (temp == 1) {
-                    return addUser(elements);
-                }
-                else {
-                    //todo return some sort of error because the username and password are not right
-                }
-            }
-            else {
-                //todo throw error/ or something
-            }
-        }
-        else if (command.equals("DELETE-USER")) {
-            if (elements.length == 3) {
-                String username = elements[1];
-                String password = elements[2];
-                int temp = 0;
-                for (int i = 0; i < numUsers; i++) {
-                    if (users[i].getName().equals(username)) {
-                        if (users[i].checkPassword(password)) {
-                            temp = 1;
-                        }
-                    }
-                }
-                if (temp == 1) {
-                    return deleteUser(elements);
-                }
-                else {
-                    //todo return some sort of error because the username and password are not right
-                }
-            }
-            else {
-                //todo throw error/ or something
-            }
-        }
-        else if (command.equals("GET-ALL-USERS")) {
-            if (elements.length == 2) {
-                String username = elements[1];
-                String password = elements[2];
-                int temp = 0;
-                for (int i = 0; i < numUsers; i++) {
-                    if (users[i].getName().equals(username)) {
-                        if (users[i].checkPassword(password)) {
-                            temp = 1;
-                        }
-                    }
-                }
-                if (temp == 1) {
-                    return getAllUsers(elements);
-                }
-                else {
-                    //todo return some sort of error because the username and password are not right
-                }
-            }
-            else {
-                //todo throw error/ or something
-            }
-        }
-        else if (command.equals("SEND-EMAIL")) {
-            if (elements.length == 5) {
-                String username = elements[1];
-                String password = elements[2];
-                int temp = 0;
-                for (int i = 0; i < numUsers; i++) {
-                    if (users[i].getName().equals(username)) {
-                        if (users[i].checkPassword(password)) {
-                            temp = 1;
-                        }
-                    }
-                }
-                if (temp == 1) {
-                    return sendEmail(elements);
-                }
-                else {
-                    //todo return some sort of error because the username and password are not right
-                }
-            }
-            else {
-                //todo throw error/ or something
-            }
-        }
-        else if (command.equals("GET-EMAILS")) {
-            if (elements.length == 4) {
-                String username = elements[1];
-                String password = elements[2];
-                int temp = 0;
-                for (int i = 0; i < numUsers; i++) {
-                    if (users[i].getName().equals(username)) {
-                        if (users[i].checkPassword(password)) {
-                            temp = 1;
-                        }
-                    }
-                }
-                if (temp == 1) {
-                    return getEmails(elements);
-                }
-                else {
-                    //todo return some sort of error because the username and password are not right
-                }
-            }
-            else {
-                //todo throw error/ or something
-            }
-        }
-        else if (command.equals("DELETE-EMAIL")) {
-            if (elements.length == 4) {
-                String username = elements[1];
-                String password = elements[2];
-                int temp = 0;
-                for (int i = 0; i < numUsers; i++) {
-                    if (users[i].getName().equals(username)) {
-                        if (users[i].checkPassword(password)) {
-                            temp = 1;
-                        }
-                    }
-                }
-                if (temp == 1) {
-                    return deleteEmail(elements);
-                }
-                else {
-                    //todo return some sort of error because the username and password are not right
-                }
-            }
-            else {
-                //todo throw error/ or something
-            }
-        }
-        // TODO: Return the correct server response based on the success, failure, or improper format of the request.
-        return null;
-    }
-    /**
-     * Replaces "poorly formatted" escape characters with their proper
-     * values. For some terminals, when escaped characters are
-     * entered, the terminal includes the "\" as a character instead
-     * of entering the escape character. This function replaces the
-     * incorrectly inputed characters with their proper escaped
-     * characters.
-     *
-     * @param str - the string to be edited
-     * @return the properly escaped string
-     */
-    private static String replaceEscapeChars(String str) {
-        str = str.replace("\\r\\n", "\r\n"); // may not be necessary, but just in case
-        str = str.replace("\\r", "\r");
-        str = str.replace("\\n", "\n");
-        str = str.replace("\\t", "\t");
-        str = str.replace("\\f", "\f");
-
-        return str;
-    }
-    //protocal methods
-    //todo add user
-    public String addUser(String[] args) {
-
-        return "";
-    }
-    //todo get all users
-    public String getAllUsers(String[] args) {
-
-        return "";
-    }
-    //todo delete user
-    public String deleteUser(String[] args) {
-
-        return "";
-    }
-    //todo send email
-    public String sendEmail(String[] args) {
-
-        return "";
-    }
-    //todo get emails
-    public String getEmails(String[] args) {
-
-        return "";
-    }
-    //todo delete email
-    public String deleteEmail(String[] args) {
-
-        return "";
-    }
-    /**
-     * This main method is for testing purposes only.
-     * @param args - the command line arguments
-     */
-    public static void main(String[] args) {
-        (new EmailServer()).run();
-    }
+		try {												//make sure it is an integer
+			id = Integer.parseInt(args[3]);
+		} catch (Exception e) {
+			return ErrorFactory.makeErrorMessage(-23, "not an int") + CRLF;
+		}
+		int nameCheck = checkUserPass(username, password);
+		if (nameCheck == -1) {
+			return "the name check is fucked";
+		}
+		else if (nameCheck == 1) {
+			return ErrorFactory.makeErrorMessage(-20, "wrong name in delete email") + CRLF;
+		}
+		else if (nameCheck == 2) {
+			return ErrorFactory.makeErrorMessage(-21, "wrong pass") + CRLF;
+		}
+		else if (nameCheck == 0) {
+			for (int i = 0; i < numCountedUsers; i++) {			//find the user to do stuff with
+				if (users[i] != null) {
+					if (users[i].getName().equals(username)) {
+						emailGetter = users[i];
+					}
+				}
+			}
+			Email[] recentMails = emailGetter.retrieveEmail(emailGetter.numEmail());
+			if (recentMails != null) {
+				for (int i = 0; i < recentMails.length; i++) {
+					if (recentMails[i].getID() == id) {
+						emailGetter.removeEmail(id);
+						return SUCCESS + CRLF;
+					}
+				}
+			}
+			return ErrorFactory.makeErrorMessage(-23, "wrong id") + CRLF;
+		}
+		return "its done fucked";
+	}
+	/**
+	 * This main method is for testing purposes only.
+	 * @param args - the command line arguments
+	 */
+	public static void main(String[] args) {
+		(new EmailServer()).run();
+	}
 }
