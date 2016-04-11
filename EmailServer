@@ -106,37 +106,29 @@ public class EmailServer {
 	public String parseRequest(String request) {
 		//Parse the client request (that means split the request into parameters).
 		String[] elements = request.split("\t");
-		String command = elements[0];
+
 		//todo check to make sure everything is split by \t??
 
 		//check to see if there is CRLF
 		String butWhy = elements[elements.length - 1];
 
-		if (butWhy.substring(butWhy.length() - 4, butWhy.length() - 1).equals(CRLF) == false) {
+		if (butWhy.contains("\r\n") == false) {
 			System.out.println(butWhy.substring(butWhy.length() - 4, butWhy.length() - 1));
 			return ErrorFactory.makeErrorMessage(-10, "no thing at end");
 		}
-		butWhy = butWhy.substring(0,butWhy.length() - 4);
+		butWhy = butWhy.substring(0,butWhy.length() - 2);
 		elements[elements.length - 1] = butWhy;
+		String command = elements[0];
+
+
 		if (command.equals("ADD-USER")) {
 			if (elements.length == 3) {
 				//check for correct username and password
 				String username = elements[1];
 				String password = elements[2];
-				int nameCheck = checkUserPass(username, password);
-				if (nameCheck == -1) {
-					return "the name check is fucked";
-				}
-				if (nameCheck == 1) {
-					return ErrorFactory.makeErrorMessage(-20, "wrong name 1") + CRLF;
-				}
-				if (nameCheck == 2) {
-					return ErrorFactory.makeErrorMessage(-21, "wrong pass 1") + CRLF;
-				}
-				if (nameCheck == 0) {
-					return addUser(elements);
-				}
-				return "what the fuck happened";
+
+				return addUser(elements);
+
 			}
 			else {
 				return ErrorFactory.makeErrorMessage(-10, "wrong format 1") + CRLF;
@@ -158,7 +150,7 @@ public class EmailServer {
 					return ErrorFactory.makeErrorMessage(-21, "wrong pass 2") + CRLF;
 				}
 				if (nameCheck == 0) {
-					return addUser(elements);
+					return deleteUser(elements);
 				}
 				return "what the fuck happened";
 			}
@@ -182,7 +174,7 @@ public class EmailServer {
 					return ErrorFactory.makeErrorMessage(-21, "wrong pass 3") + CRLF;
 				}
 				if (nameCheck == 0) {
-					return addUser(elements);
+					return getAllUsers(elements);
 				}
 				return "what the fuck happened";
 			}
@@ -206,7 +198,7 @@ public class EmailServer {
 					return ErrorFactory.makeErrorMessage(-21, "wrong pass 4") + CRLF;
 				}
 				if (nameCheck == 0) {
-					return addUser(elements);
+					return sendEmail(elements);
 				}
 				return "what the fuck happened";
 			}
@@ -230,7 +222,7 @@ public class EmailServer {
 					return ErrorFactory.makeErrorMessage(-21, "wrong pass 5") + CRLF;
 				}
 				if (nameCheck == 0) {
-					return addUser(elements);
+					return getEmails(elements);
 				}
 				return "what the fuck happened";
 			}
@@ -254,7 +246,7 @@ public class EmailServer {
 					return ErrorFactory.makeErrorMessage(-21, "wrong pass 6") + CRLF;
 				}
 				if (nameCheck == 0) {
-					return addUser(elements);
+					return deleteEmail(elements);
 				}
 				return "what the fuck happened";
 			}
@@ -295,12 +287,15 @@ public class EmailServer {
 			return "the name check is fucked";
 		}
 		else if (nameCheck == 0 || nameCheck == 2) {
-			return ErrorFactory.makeErrorMessage(-22, "same name") + CRLF;
+			return ErrorFactory.makeErrorMessage(-22, "same name in add user?") + CRLF;
 		}
 		else if (nameCheck == 1) {
 			if (username.length() < 1 || username.length() > 20 || password.length() < 4 || password.length() > 40) {
 				return ErrorFactory.makeErrorMessage(-23, "username or password don't work") + CRLF;
 			}	//"NOTE: these requirements are part of the User class, not the EmailServer"????
+			if (username.matches("[A-Za-z0-9]+") == false || password.matches("[A-Za-z0-9]+") == false) {
+				return ErrorFactory.makeErrorMessage(-23, "username or password don't work") + CRLF;
+			}
 			else {
 				User u = new User(username, password);
 				if (numCountedUsers == users.length) {
@@ -449,8 +444,13 @@ public class EmailServer {
 				}
 			}
 			Email[] recentMails = emailGetter.retrieveEmail(numMessages);
-			for (int i = 0; i < recentMails.length; i++) {
-				theEmails = theEmails + DELIMITER + recentMails[i].getMessage();
+			String fullMessage = "";
+			if (recentMails != null) {
+				for (int i = 0; i < recentMails.length; i++) {
+					fullMessage = recentMails[i].toString();
+					theEmails = theEmails + DELIMITER + fullMessage;
+
+				}
 			}
 			return SUCCESS + theEmails + CRLF;
 		}
