@@ -1,0 +1,52 @@
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+
+/**
+ * Created by Eli Scherrer on 4/11/2016.
+ */
+public class OnlineEmailServer extends EmailServer {
+    ServerSocket ss;
+
+    public OnlineEmailServer(String filename, int port) throws IOException {
+        this.ss = new ServerSocket(port);
+        ss.setReuseAddress(true);
+        this.f = new File(filename);
+        //todo not sure if any of this is right
+        try {
+
+            this.s = new Scanner(f);
+            while (s.hasNext()) {
+                String fullLine = s.nextLine();
+                String[] splitUp = fullLine.split(",");
+                if (splitUp.length == 2) {
+                    addUser(splitUp);
+                }
+            }
+        } catch (Exception e) {
+            f.createNewFile();
+        }
+    }
+
+   /* @Override
+    public void run() {
+        while (true) {
+            try {
+                Socket client = this.ss.accept();
+            } catch (IOException e) {
+                System.out.println("Couldn't accept the socket");
+            }
+
+            // process the client connection with processClient()
+        }
+    }
+    public void processClient(Socket client) throws IOException {
+        //todo Handle processing a client's request (input and output)
+    }
+    public void stop() {
+        //TODO implement
+    }
+    */
+}
