@@ -1,4 +1,6 @@
 import javax.swing.*;
+import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.*;
 
 /**
@@ -25,11 +27,53 @@ public class EmailServer {
 	User[] users = {new User("root", "cs180")};
 	public int numUsers = 1;
 	public int numCountedUsers = 1;
-
-
+	public int thereIsAFile;
+	public File f;
+	public FileWriter p;
+	public Scanner s;
+	public BufferedWriter bw;
 
 	// Used to print out extra information
 	private boolean verbose = false;
+
+	public EmailServer() {
+		thereIsAFile = 0;
+	}
+
+	public EmailServer(String fileName) throws IOException {
+		this.f = new File(fileName);
+		int tempCount = 0;
+		String[] array = new String[20];
+		try {
+			this.s = new Scanner(f);
+			while (s.hasNext()) {
+
+				String fullLine = this.s.nextLine();
+				array[tempCount] = fullLine;
+				String[] splitUp = fullLine.split(",");
+				if (splitUp.length == 2) {
+					String[] fuckThisShit = {"fuck", splitUp[0], splitUp[1]};
+					addUser(fuckThisShit);
+				}
+				tempCount++;
+			}
+			//rewrite the file
+			FileWriter blankSpace = new FileWriter(f);
+			for (int i = 0; i < tempCount; i++) {
+				blankSpace.write(array[i] + "\n");
+			}
+			blankSpace.close();
+			s.close();
+		} catch (FileNotFoundException e) {
+			f.createNewFile();
+			PrintWriter clearAll = new PrintWriter(f);
+			clearAll.print("");
+			clearAll.close();
+		}
+		thereIsAFile = 1;
+		this.p = new FileWriter(f,true);
+		bw = new BufferedWriter(p);
+	}
 
 	public void run() {
 		Scanner in = new Scanner(System.in);
@@ -113,7 +157,6 @@ public class EmailServer {
 		String butWhy = elements[elements.length - 1];
 
 		if (butWhy.contains("\r\n") == false) {
-			System.out.println(butWhy.substring(butWhy.length() - 4, butWhy.length() - 1));
 			return ErrorFactory.makeErrorMessage(-10, "no thing at end");
 		}
 		butWhy = butWhy.substring(0,butWhy.length() - 2);
@@ -304,6 +347,17 @@ public class EmailServer {
 				users[numUsers] = u;
 				numUsers++;
 				numCountedUsers++;
+				//I-O stuff
+
+				if (thereIsAFile == 1) {
+					try {
+						bw.write(username + "," + password );
+						bw.close();
+					} catch (IOException e) {
+						System.out.println("file writer couldn't write");
+					}
+				}
+
 				return SUCCESS + CRLF;
 			}
 		}
@@ -354,10 +408,59 @@ public class EmailServer {
 				for (int i = 0; i < numCountedUsers; i++) {
 					if (users[i] != null) {
 						if (users[i].getName().equals(username)) {
+							//I-O stuffs
+							if (thereIsAFile == 1) {
+								try {
+									s = new Scanner(f);
+									String fullLine = s.nextLine();
+									String[] splitUp = fullLine.split(",");
+									if (splitUp.length == 2) {
+										if (username.equals(users[i].getName())) {
+											try {
+												File tempFile = new File("tempFile");
+												tempFile.createNewFile();
+												BufferedReader reader = new BufferedReader(new FileReader(this.f));
+												BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+												String lineToRemove = username + "," + password;
+												String currentLine;
+
+												System.out.println(lineToRemove + "---remove this");
+
+												while ((currentLine = reader.readLine()) != null) {
+
+													String trimmedLine = currentLine.trim();
+													System.out.println(trimmedLine + "--trimmedLine");
+													if (trimmedLine.equals(lineToRemove)) {
+														System.out.println("removed??");
+													}
+													else {
+														System.out.println(currentLine + "--this is in file");
+														writer.write(currentLine + System.getProperty("line.separator"));
+													}
+												}
+												writer.close();
+												reader.close();
+												Scanner s = new Scanner(tempFile);
+
+												FileChannel src = new FileInputStream(tempFile).getChannel();
+												FileChannel dest = new FileOutputStream(this.f).getChannel();
+												dest.transferFrom(src, 0, src.size());
+												
+											} catch (Exception e) {
+												System.out.println("Honestly have no clue i dont understand this");
+											}
+										}
+									}
+								} catch (IOException e) {
+									System.out.println("erroer when trying to delete");
+								}
+							}
+
 							users[i] = null;
 							//todo shift the array??
 							numUsers--;
-							return "SUCCESS\r\n";
+							return SUCCESS + CRLF;
 						}
 					}
 				}
