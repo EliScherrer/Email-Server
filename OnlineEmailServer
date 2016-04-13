@@ -1,6 +1,6 @@
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import cs180.net.Socket;
+import cs180.net.ServerSocket;
 import java.util.Scanner;
 
 /**
@@ -8,63 +8,84 @@ import java.util.Scanner;
  */
 public class OnlineEmailServer extends EmailServer {
     ServerSocket ss;
+    FileReader fr;
+    BufferedReader b;
+    PrintWriter pw;
 
     public OnlineEmailServer(String filename, int port) throws IOException {
-        this.ss = new ServerSocket(port);
-        ss.setReuseAddress(true);
         this.f = new File(filename);
-        //todo not sure if any of this is right
-        try {
+        int tempCount = 0;
+        String[] array = new String[200];
 
+        try {
+            this.ss = new ServerSocket(port);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ss.setReuseAddress(true);
+        try {
             this.s = new Scanner(f);
             while (s.hasNext()) {
-                String fullLine = s.nextLine();
+                String fullLine = this.s.nextLine();
+                array[tempCount] = fullLine;
                 String[] splitUp = fullLine.split(",");
                 if (splitUp.length == 2) {
-                    addUser(splitUp);
+                    String[] fuckThisShit = {"fuck", splitUp[0], splitUp[1]};
+                    addUser(fuckThisShit);
                 }
+                tempCount++;
             }
-        } catch (Exception e) {
+            //rewrite the file
+            FileWriter blankSpace = new FileWriter(f);
+            for (int i = 0; i < tempCount; i++) {
+                blankSpace.write(array[i] + "\n");
+            }
+            blankSpace.close();
+            s.close();
+        } catch (FileNotFoundException e) {
             f.createNewFile();
+            PrintWriter clearAll = new PrintWriter(f);
+            clearAll.print("");
+            clearAll.close();
         }
+        thereIsAFile = 1;
+        this.p = new FileWriter(f,true);
+        bw = new BufferedWriter(p);
+        this.fr = null;
+        this.b = null;
+        this.pw = null;
     }
 
     @Override
     public void run() {
-      //  try {
-        //    FileReader fr = new FileReader(this.f);
-          //  PrintWriter p = new PrintWriter(bw);
-            //BufferedReader b = new BufferedReader(fr);
-            while (!this.ss.isClosed()) {
-                try {
-                    Socket client = this.ss.accept(); // Replaces stdin
-                    client.setSoTimeout(60000); // Sets client to timeout after a minute of no request
-                    processClient(client); // Uses processClient method to process the client connection
-                } catch (IOException e) {
-                    System.out.println("Couldn't accept the socket");
-                }
-
-                // process the client connection with processClient()
-            }
-           /** try {
-             //   fr.close(); this is me being retarded and trying to close the shit like it told me to in the lab handout
-               // p.close();  where the fuck do I close it? I feel like it needs to happen in processClient.....
-               // b.close();  FUCK
-                stop();
+        while (!this.ss.isClosed()) {
+            try {
+                Socket client = this.ss.accept(); // Replaces stdin
+                client.setSoTimeout(60000); // Sets client to timeout after a minute of no request
+                processClient(client); // Uses processClient method to process the client connection
             } catch (IOException e) {
-                e.printStackTrace();
-            } **/
+                System.out.println("Couldn't accept the socket");
+            }
+        }
 
-       // } catch (FileNotFoundException e) {
-      //      e.printStackTrace();
-      //  }
+        try {
+            this.fr.close();
+            this.p.close();
+            this.b.close();
+            stop();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     public void processClient(Socket client) throws IOException {
-        //todo Handle processing a client's request (input and output)
-        FileReader fr = new FileReader(this.f); // create FileReader to read from given file
-        PrintWriter p = new PrintWriter(client.getOutputStream()); // Create PrintWriter based off of OutputStream from client
-        BufferedReader b = new BufferedReader(fr); //Create BufferedReader to read from FileReader
-        p.printf(parseRequest(b.readLine())); // Use PrintWriter's print function to send output given what BufferedReader has read
+
+        this.fr = new FileReader(String.valueOf(client.getInputStream())); // create FileReader to read from given file
+        this.b = new BufferedReader(fr); //Create BufferedReader to read from FileReader
+
+        this.pw = new PrintWriter(client.getOutputStream()); // Create PrintWriter based off of OutputStream from client
+
+        this.pw.printf(parseRequest(b.readLine())); // Use PrintWriter's print function to send output given what BufferedReader has read
 
     }
     public void stop() {
@@ -74,5 +95,4 @@ public class OnlineEmailServer extends EmailServer {
             e.printStackTrace();
         }
     }
-
 }
