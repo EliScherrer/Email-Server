@@ -1,5 +1,4 @@
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
@@ -30,23 +29,50 @@ public class OnlineEmailServer extends EmailServer {
         }
     }
 
-   @Override
+    @Override
     public void run() {
-        while (true) {
-            try {
-                Socket client = this.ss.accept();
-            } catch (IOException e) {
-                System.out.println("Couldn't accept the socket");
-            }
+      //  try {
+        //    FileReader fr = new FileReader(this.f);
+          //  PrintWriter p = new PrintWriter(bw);
+            //BufferedReader b = new BufferedReader(fr);
+            while (!this.ss.isClosed()) {
+                try {
+                    Socket client = this.ss.accept(); // Replaces stdin
+                    client.setSoTimeout(60000); // Sets client to timeout after a minute of no request
+                    processClient(client); // Uses processClient method to process the client connection
+                } catch (IOException e) {
+                    System.out.println("Couldn't accept the socket");
+                }
 
-            // process the client connection with processClient()
-        }
+                // process the client connection with processClient()
+            }
+           /** try {
+             //   fr.close(); this is me being retarded and trying to close the shit like it told me to in the lab handout
+               // p.close();  where the fuck do I close it? I feel like it needs to happen in processClient.....
+               // b.close();  FUCK
+                stop();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } **/
+
+       // } catch (FileNotFoundException e) {
+      //      e.printStackTrace();
+      //  }
     }
     public void processClient(Socket client) throws IOException {
         //todo Handle processing a client's request (input and output)
+        FileReader fr = new FileReader(this.f); // create FileReader to read from given file
+        PrintWriter p = new PrintWriter(client.getOutputStream()); // Create PrintWriter based off of OutputStream from client
+        BufferedReader b = new BufferedReader(fr); //Create BufferedReader to read from FileReader
+        p.printf(parseRequest(b.readLine())); // Use PrintWriter's print function to send output given what BufferedReader has read
+
     }
     public void stop() {
-        //TODO implement
+        try {
+            this.ss.close(); // Close the SocketServer
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-    
+
 }
